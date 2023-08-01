@@ -10,18 +10,22 @@ let store = {
 // We need our javascript to wait until the DOM is loaded
 document.addEventListener("DOMContentLoaded", function() {
 	onPageLoad()
-	setupClickHandlers()
+	.then(() => {
+		console.log('got tracks and racers');
+		setupTrackHandlers()
+		setupPodHandlers()
+	})	
 })
 
 async function onPageLoad() {
 	try {
-		getTracks()
+		await getTracks()
 			.then(tracks => {
 				const html = renderTrackCards(tracks)
 				renderAt('#tracks', html)
 			})
 
-		getRacers()
+		await getRacers()
 			.then((racers) => {
 				const html = renderRacerCars(racers)
 				renderAt('#racers', html)
@@ -30,6 +34,26 @@ async function onPageLoad() {
 		console.log("Problem getting tracks and racers ::", error.message)
 		console.error(error)
 	}
+}
+
+/* The click handlers as provided (in setupClickHandlers()) did not work properly because clicking on any child element inside the card (list item) did not return the id of the entire card. Fix: Use event.currentTarget instead of event.target. I also think it is a bit ore robust to attach listeners directly to elements */
+
+function setupTrackHandlers() {
+	const listItems = document.querySelectorAll('#tracks li');
+	listItems.forEach(item => {
+		item.addEventListener('click', function(event) {
+			handleSelectTrack(event.currentTarget);
+		});
+	});
+}
+
+function setupPodHandlers() {
+	const listItems = document.querySelectorAll('#racers li');
+	listItems.forEach(item => {
+		item.addEventListener('click', function(event) {
+			handleSelectPodRacer(event.currentTarget);
+		});
+	});
 }
 
 function setupClickHandlers() {
@@ -146,6 +170,7 @@ function handleSelectPodRacer(target) {
 	target.classList.add('selected')
 
 	// TODO - save the selected racer to the store
+	setPlayerId(target.id);
 }
 
 function handleSelectTrack(target) {
@@ -161,7 +186,17 @@ function handleSelectTrack(target) {
 	target.classList.add('selected')
 
 	// TODO - save the selected track id to the store
-	
+	setTrackId(target.id);
+}
+
+function setPlayerId(id) {
+	store.player_id = id;
+	console.log(store);
+}
+
+function setTrackId(id) {
+	store.track_id = id;
+	console.log(store);
 }
 
 function handleAccelerate() {
@@ -181,10 +216,9 @@ function renderRacerCars(racers) {
 
 	const results = racers.map(renderRacerCard).join('')
 
+	// removed duplicate id racer
 	return `
-		<ul id="racers">
 			${results}
-		</ul>
 	`
 }
 
@@ -210,10 +244,9 @@ function renderTrackCards(tracks) {
 
 	const results = tracks.map(renderTrackCard).join('')
 
+	// removed duplicate id tracks
 	return `
-		<ul id="tracks">
 			${results}
-		</ul>
 	`
 }
 
@@ -320,12 +353,18 @@ function defaultFetchOpts() {
 
 // TODO - Make a fetch call (with error handling!) to each of the following API endpoints 
 
-function getTracks() {
+async function getTracks() {
 	// GET request to `${SERVER}/api/tracks`
+	return await fetch(`${SERVER}/api/tracks`)
+	.then(res => res.json())
+	.catch(err => console.log("Problem with getTracks request:", err))
 }
 
-function getRacers() {
+async function getRacers() {
 	// GET request to `${SERVER}/api/cars`
+	return await fetch(`${SERVER}/api/cars`)
+	.then(res => res.json())
+	.catch(err => console.log("Problem with getRacers request:", err))
 }
 
 function createRace(player_id, track_id) {
