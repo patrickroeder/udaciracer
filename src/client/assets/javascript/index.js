@@ -146,18 +146,27 @@ async function handleCreateRace() {
 
 	// TODO - update the store with the race id
 	// For the API to work properly, the race id should be race id - 1
-	setRaceId(1);
+	let raceId = race.ID - 1;
+
+	/* There's a bug presumably on the server side: An attempt will to start a race with id 1 fail with the error 'invalid race id'.
+	This is a workaround: A new race is created in this case   */
+	if (raceId === 1) {
+		await createRace(playerId, trackId);
+		raceId++;
+	}
+
+	setRaceId(raceId);
+	console.log(store);
 	
 	// The race has been created, now start the countdown
 	// TODO - call the async function runCountdown
 	await runCountdown();
-	console.log('counted down');
 
 	// TODO - call the async function startRace
 	await startRace(getRaceId());
 
 	// TODO - call the async function runRace
-	// await runRace(getRaceId());
+	await runRace(getRaceId());
 
 }
 
@@ -165,15 +174,29 @@ function runRace(raceID) {
 	return new Promise(resolve => {
 	// TODO - use Javascript's built in setInterval method to get race info every 500ms
 
+	/* getRace(raceID)
+	.then(info => {
+		console.log(info);
+		resolve();
+	}) */
+
 	const interval = setInterval(() => {
-		// run this DOM manipulation to decrement the countdown for the user
-		console.log()
-		if (timer === 0) {
-			// TODO - if the countdown is done, clear the interval, resolve the promise, and return
-			clearInterval(interval);
-			resolve();
-		}
-	}, 500);
+		getRace(raceID)
+		.then(res => {
+			console.log(res);
+			renderAt('#leaderBoard', raceProgress(res.positions));
+			return res;
+		})
+		.then(res => {
+			if (res.status === 'finished') {
+				clearInterval(interval);
+				console.log('race finished');
+				resolve();
+			}
+		})
+		.catch(err => console.log("Problem fetching race info::", err))
+		
+	}, 1000);
 
 	/* 
 		TODO - if the race info status property is "in-progress", update the leaderboard by calling:
@@ -250,8 +273,8 @@ function handleSelectTrack(target) {
 }
 
 function handleAccelerate() {
-	console.log("accelerate button clicked")
 	// TODO - Invoke the API call to accelerate
+	accelerate(getRaceId());
 }
 
 // ------------ Getters and setters for the store  --------
@@ -262,7 +285,7 @@ function getPlayerId() {
 
 function setPlayerId(id) {
 	store.player_id = id;
-	console.log(store);
+	// console.log(store);
 }
 
 function getTrackId() {
@@ -271,7 +294,7 @@ function getTrackId() {
 
 function setTrackId(id) {
 	store.track_id = id;
-	console.log(store);
+	// console.log(store);
 }
 
 function getRaceId() {
@@ -280,7 +303,7 @@ function getRaceId() {
 
 function setRaceId(id) {
 	store.race_id = id;
-	console.log(store);
+	// console.log(store);
 }
 
 // HTML VIEWS ------------------------------------------------
@@ -382,8 +405,8 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	let userPlayer = positions.find(e => e.id === store.player_id)
-	userPlayer.driver_name += " (you)"
+	// let userPlayer = positions.find(e => e.id === store.player_id)
+	// userPlayer.driver_name += " (you)"
 
 	positions = positions.sort((a, b) => (a.segment > b.segment) ? -1 : 1)
 	let count = 1
@@ -464,7 +487,9 @@ function createRace(player_id, track_id) { // returns a promise
 
 function getRace(id) {
 	// GET request to `${SERVER}/api/races/${id}`
-
+	return fetch(`${SERVER}/api/races/${id}`)
+	.then(res => res.json())
+	.catch(err => console.log("Problem with getRace request:", err))
 }
 
 function startRace(id) {
@@ -472,12 +497,22 @@ function startRace(id) {
 		method: 'POST',
 		...defaultFetchOpts(),
 	})
-	.then(res => res.json())
-	.catch(err => console.log("Problem with getRace request::", err))
+	.then(res => {
+		console.log(`Race with ID ${id} started: ${res.status}`);
+	})
+	.catch(err => console.log("Problem with startRace request::", err))
 }
 
 function accelerate(id) {
 	// POST request to `${SERVER}/api/races/${id}/accelerate`
 	// options parameter provided as defaultFetchOpts
 	// no body or datatype needed for this request
+	return fetch(`${SERVER}/api/races/${id}/accelerate`, {
+		method: 'POST',
+		...defaultFetchOpts(),
+	})
+	.then(res => {
+		console.log(`Player ${id} accelerated: ${res.status}`);
+	})
+	.catch(err => console.log("Problem with accelerate request::", err))
 }
