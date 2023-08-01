@@ -12,9 +12,10 @@ document.addEventListener("DOMContentLoaded", function() {
 	onPageLoad()
 	.then(() => {
 		console.log('got tracks and racers');
-		setupTrackHandlers()
-		setupPodHandlers()
-	})	
+		setupTrackHandlers();
+		setupPodHandlers();
+		setupSubmitHandler();
+	})
 })
 
 async function onPageLoad() {
@@ -36,7 +37,7 @@ async function onPageLoad() {
 	}
 }
 
-/* The click handlers as provided (in setupClickHandlers()) did not work properly because clicking on any child element inside the card (list item) did not return the id of the entire card. Fix: Use event.currentTarget instead of event.target. I also think it is a bit ore robust to attach listeners directly to elements */
+/* The click handlers as provided (in setupClickHandlers()) did not work properly because clicking on any child element inside the card (list item) did not return the id of the entire card. Fix: Use event.currentTarget instead of event.target. I also think it is a bit more robust to attach listeners directly to elements */
 
 function setupTrackHandlers() {
 	const listItems = document.querySelectorAll('#tracks li');
@@ -56,22 +57,38 @@ function setupPodHandlers() {
 	});
 }
 
+function setupSubmitHandler() {
+	const submit = document.querySelector('#submit-create-race');
+	submit.addEventListener('click', function(event) {
+		event.preventDefault();
+		handleCreateRace();
+	});
+}
+
+function setupAccelHandler() {
+	const accelButton = document.querySelector('#gas-peddle');
+	accelButton.addEventListener('click', function(event) {
+		handleAccelerate();
+	});
+}
+
+/*
 function setupClickHandlers() {
 	document.addEventListener('click', function(event) {
 		const { target } = event
 
 		// Race track form field
-		if (target.matches('.card.track')) {
+		if (currentTarget.matches('.card.track')) {
 			handleSelectTrack(target)
 		}
 
 		// Podracer form field
-		if (target.matches('.card.podracer')) {
+		if (currentTarget.matches('.card.podracer')) {
 			handleSelectPodRacer(target)
 		}
 
 		// Submit create race form
-		if (target.matches('#submit-create-race')) {
+		if (currentTarget.matches('#submit-create-race')) {
 			event.preventDefault()
 	
 			// start race
@@ -85,6 +102,7 @@ function setupClickHandlers() {
 
 	}, false)
 }
+*/
 
 async function delay(ms) {
 	try {
@@ -99,7 +117,10 @@ async function delay(ms) {
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
 	// render starting UI
-	renderAt('#race', renderRaceStartView())
+	renderAt('#race', renderRaceStartView(store.track_id));
+
+	// add handler for acceleration button (now that it is rendered)
+	setupAccelHandler();
 
 	// TODO - Get player_id and track_id from the store
 	
