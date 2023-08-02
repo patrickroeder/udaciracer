@@ -391,7 +391,10 @@ function resultsView(positions) {
 
 function raceProgress(positions) {
 	let userPlayer = positions.find(e => e.id === getPlayerId());
-  userPlayer.driver_name += " (you)";
+
+	if (!userPlayer.driver_name.endsWith(" (you)")) {
+		userPlayer.driver_name += " (you)";
+	}
 
 	positions = positions.sort((a, b) => (a.segment > b.segment) ? -1 : 1);
 	let count = 1;
