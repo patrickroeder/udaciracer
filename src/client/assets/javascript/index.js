@@ -127,14 +127,14 @@ async function delay(ms) {
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
 
-	// initialize with blank variable
+	// get tracks, then find current track in order to render the name in renderRaceStartView()
 	const tracks = await getTracks();
 	let track = tracks.find(e => e.id === getTrackId());
 
 	// render starting UI
 	renderAt('#race', renderRaceStartView(track));
 
-	// add handler for acceleration button (now that it is rendered)
+	// add handler for acceleration button (now that the view is rendered)
 	setupAccelHandler();
 
 	// Get player_id and track_id from the store
@@ -160,15 +160,11 @@ async function handleCreateRace() {
 	console.log(store);
 	
 	// The race has been created, now start the countdown
-	// TODO - call the async function runCountdown
 	await runCountdown();
 
-	// TODO - call the async function startRace
 	await startRace(getRaceId());
 
-	// TODO - call the async function runRace
 	await runRace(getRaceId());
-
 }
 
 function runRace(raceID) {
@@ -203,13 +199,12 @@ async function runCountdown() {
 		let timer = 3;
 
 		return new Promise(resolve => {
-			// TODO - use Javascript's built in setInterval method to count down once per second
 
 			const interval = setInterval(() => {
 				// run this DOM manipulation to decrement the countdown for the user
 				document.getElementById('big-numbers').innerHTML = --timer;
 				if (timer === 0) {
-					// TODO - if the countdown is done, clear the interval, resolve the promise, and return
+					// if the countdown is done, clear the interval, resolve the promise, and return
 					clearInterval(interval);
 					resolve();
 				}
@@ -233,7 +228,7 @@ function handleSelectPodRacer(target) {
 	// add class selected to current target
 	target.classList.add('selected')
 
-	// TODO - save the selected racer to the store
+	// save the selected racer to the store
 	setPlayerId(target.id);
 }
 
@@ -249,7 +244,7 @@ function handleSelectTrack(target) {
 	// add class selected to current target
 	target.classList.add('selected')
 
-	// TODO - save the selected track id to the store
+	// save the selected track id to the store
 	setTrackId(target.id);
 }
 
@@ -349,7 +344,6 @@ function renderCountdown(count) {
 	`
 }
 
-// TODO show real track info
 function renderRaceStartView(track) {
 	return `
 		<header>
@@ -434,7 +428,7 @@ function defaultFetchOpts() {
 	}
 }
 
-// TODO - Make a fetch call (with error handling!) to each of the following API endpoints 
+// Make a fetch call (with error handling!) to each of the following API endpoints 
 
 function getTracks() { // returns a promise
 	// GET request to `${SERVER}/api/tracks`
