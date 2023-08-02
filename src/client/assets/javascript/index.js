@@ -127,44 +127,49 @@ async function delay(ms) {
 // This async function controls the flow of the race, add the logic and error handling
 async function handleCreateRace() {
 
-	// get tracks, then find current track in order to render the name in renderRaceStartView()
-	const tracks = await getTracks();
-	let track = tracks.find(e => e.id === getTrackId());
+	try {
+		// get tracks, then find current track in order to render the name in renderRaceStartView()
+		const tracks = await getTracks();
+		let track = tracks.find(e => e.id === getTrackId());
 
-	// render starting UI
-	renderAt('#race', renderRaceStartView(track));
+		// render starting UI
+		renderAt('#race', renderRaceStartView(track));
 
-	// add handler for acceleration button (now that the view is rendered)
-	setupAccelHandler();
+		// add handler for acceleration button (now that the view is rendered)
+		setupAccelHandler();
 
-	// Get player_id and track_id from the store
-	const playerId = getPlayerId();
-	const trackId = getTrackId();
-	
-	// invoke the API call to create the race, then save the result
-	const race = await createRace(playerId, trackId);
-	console.log(race);
+		// Get player_id and track_id from the store
+		const playerId = getPlayerId();
+		const trackId = getTrackId();
+		
+		// invoke the API call to create the race, then save the result
+		const race = await createRace(playerId, trackId);
+		console.log(race);
 
-	// update the store with the race id
-	// For the API to work properly, the race id should be race id - 1
-	let raceId = race.ID - 1;
+		// update the store with the race id
+		// For the API to work properly, the race id should be race id - 1
+		let raceId = race.ID - 1;
 
-	/* There's a bug presumably on the server side: An attempt will to start a race with id 1 fail with the error 'invalid race id'.
-	This is a workaround: A new race is created in this case   */
-	if (raceId === 1) {
-		await createRace(playerId, trackId);
-		raceId++;
+		/* There's a bug presumably on the server side: An attempt will to start a race with id 1 fail with the error 'invalid race id'.
+		This is a workaround: A new race is created in this case   */
+		if (raceId === 1) {
+			await createRace(playerId, trackId);
+			raceId++;
+		}
+
+		setRaceId(raceId);
+		console.log(store);
+		
+		// The race has been created, now start the countdown
+		await runCountdown();
+
+		await startRace(getRaceId());
+
+		await runRace(getRaceId());
+
+	} catch(err) {
+		console.log('Error running the race:', err);
 	}
-
-	setRaceId(raceId);
-	console.log(store);
-	
-	// The race has been created, now start the countdown
-	await runCountdown();
-
-	await startRace(getRaceId());
-
-	await runRace(getRaceId());
 }
 
 function runRace(raceID) {
@@ -186,10 +191,9 @@ function runRace(raceID) {
 		})
 		.catch(err => console.log("Problem fetching race info::", err))
 		
-	}, 1000);
+	}, 500);
 
 	})
-	// remember to add error handling for the Promise
 }
 
 async function runCountdown() {
@@ -393,15 +397,14 @@ function raceProgress(positions) {
 				</td>
 			</tr>
 		`
-	})
+	}).join(''); // added a join to render the elements correctly
 
 	return `
-		<main>
-			<h3>Leaderboard</h3>
-			<section id="leaderBoard">
-				${results}
-			</section>
-		</main>
+		<h2>Leaderboard</h2>
+		&nbsp;
+		<table>
+			${results}
+		<table>
 	`
 }
 

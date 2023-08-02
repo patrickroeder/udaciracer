@@ -29,6 +29,12 @@ section#accelerate button {
     font-size: 70px;
 }
 
+#gas-peddle {
+    color: white;
+    font-style: bold;
+    font-size: 24px;
+}
+
 /* -------------------  TABLET  --------------------- */
 @media (min-width: 768px) {
 
