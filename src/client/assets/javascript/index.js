@@ -128,7 +128,8 @@ async function delay(ms) {
 async function handleCreateRace() {
 
 	// initialize with blank variable
-	const track = {};
+	const tracks = await getTracks();
+	let track = tracks.find(e => e.id === getTrackId());
 
 	// render starting UI
 	renderAt('#race', renderRaceStartView(track));
@@ -136,15 +137,15 @@ async function handleCreateRace() {
 	// add handler for acceleration button (now that it is rendered)
 	setupAccelHandler();
 
-	// TODO - Get player_id and track_id from the store
+	// Get player_id and track_id from the store
 	const playerId = getPlayerId();
 	const trackId = getTrackId();
 	
-	// const race = TODO - invoke the API call to create the race, then save the result
+	// invoke the API call to create the race, then save the result
 	const race = await createRace(playerId, trackId);
 	console.log(race);
 
-	// TODO - update the store with the race id
+	// update the store with the race id
 	// For the API to work properly, the race id should be race id - 1
 	let raceId = race.ID - 1;
 
@@ -172,15 +173,8 @@ async function handleCreateRace() {
 
 function runRace(raceID) {
 	return new Promise(resolve => {
-	// TODO - use Javascript's built in setInterval method to get race info every 500ms
 
-	/* getRace(raceID)
-	.then(info => {
-		console.log(info);
-		resolve();
-	}) */
-
-	const interval = setInterval(() => {
+	const raceInterval = setInterval(() => {
 		getRace(raceID)
 		.then(res => {
 			console.log(res);
@@ -189,28 +183,15 @@ function runRace(raceID) {
 		})
 		.then(res => {
 			if (res.status === 'finished') {
-				clearInterval(interval);
-				console.log('race finished');
-				resolve();
+				clearInterval(raceInterval);
+				renderAt('#race', resultsView(res.positions));
+				resolve(res);
 			}
 		})
 		.catch(err => console.log("Problem fetching race info::", err))
 		
 	}, 1000);
 
-	/* 
-		TODO - if the race info status property is "in-progress", update the leaderboard by calling:
-
-		renderAt('#leaderBoard', raceProgress(res.positions))
-	*/
-
-	/* 
-		TODO - if the race info status property is "finished", run the following:
-
-		clearInterval(raceInterval) // to stop the interval from repeating
-		renderAt('#race', resultsView(res.positions)) // to render the results view
-		reslove(res) // resolve the promise
-	*/
 	})
 	// remember to add error handling for the Promise
 }
@@ -273,7 +254,6 @@ function handleSelectTrack(target) {
 }
 
 function handleAccelerate() {
-	// TODO - Invoke the API call to accelerate
 	accelerate(getRaceId());
 }
 
@@ -284,7 +264,7 @@ function getPlayerId() {
 }
 
 function setPlayerId(id) {
-	store.player_id = id;
+	store.player_id = parseInt(id);
 	// console.log(store);
 }
 
@@ -293,7 +273,7 @@ function getTrackId() {
 }
 
 function setTrackId(id) {
-	store.track_id = id;
+	store.track_id = parseInt(id);
 	// console.log(store);
 }
 
@@ -302,7 +282,7 @@ function getRaceId() {
 }
 
 function setRaceId(id) {
-	store.race_id = id;
+	store.race_id = parseInt(id);
 	// console.log(store);
 }
 
@@ -391,7 +371,7 @@ function renderRaceStartView(track) {
 }
 
 function resultsView(positions) {
-	positions.sort((a, b) => (a.final_position > b.final_position) ? 1 : -1)
+	positions.sort((a, b) => (a.final_position > b.final_position) ? 1 : -1);
 
 	return `
 		<header>
@@ -405,8 +385,8 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	// let userPlayer = positions.find(e => e.id === store.player_id)
-	// userPlayer.driver_name += " (you)"
+	let userPlayer = positions.find(e => e.id === getPlayerId());
+  userPlayer.driver_name += " (you)";
 
 	positions = positions.sort((a, b) => (a.segment > b.segment) ? -1 : 1)
 	let count = 1
@@ -512,7 +492,7 @@ function accelerate(id) {
 		...defaultFetchOpts(),
 	})
 	.then(res => {
-		console.log(`Player ${id} accelerated: ${res.status}`);
+		console.log(`Player accelerated: ${res.status}`);
 	})
 	.catch(err => console.log("Problem with accelerate request::", err))
 }
