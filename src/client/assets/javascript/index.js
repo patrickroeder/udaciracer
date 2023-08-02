@@ -1,7 +1,7 @@
 // PROVIDED CODE BELOW (LINES 1 - 80) DO NOT REMOVE
 
 // The store will hold all information needed globally
-let store = {
+const store = {
 	track_id: undefined,
 	player_id: undefined,
 	race_id: undefined,
@@ -134,7 +134,7 @@ async function handleCreateRace() {
 	try {
 		// get tracks, then find current track in order to render the name in renderRaceStartView()
 		const tracks = await getTracks();
-		let track = tracks.find(e => e.id === getTrackId());
+		const track = tracks.find(e => e.id === getTrackId());
 
 		// render starting UI
 		renderAt('#race', renderRaceStartView(track));
@@ -390,7 +390,7 @@ function resultsView(positions) {
 }
 
 function raceProgress(positions) {
-	let userPlayer = positions.find(e => e.id === getPlayerId());
+	const userPlayer = positions.find(e => e.id === getPlayerId());
 
 	if (!userPlayer.driver_name.endsWith(" (you)")) {
 		userPlayer.driver_name += " (you)";
