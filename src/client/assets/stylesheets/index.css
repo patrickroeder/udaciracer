@@ -21,7 +21,7 @@ body {
 }
 
 header {
-  background-image: url('https://via.placeholder.com/1150');
+  background-image: url('/assets/images/ep1-racer.jpg');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
